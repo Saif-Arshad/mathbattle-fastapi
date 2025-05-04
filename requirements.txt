@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+motor
+python-dotenv
+python-jose[cryptography]
+passlib[bcrypt]
+pydantic==1.10.12
+
