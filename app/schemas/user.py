@@ -16,13 +16,15 @@ class PyObjectId(ObjectId):
 class UserBase(BaseModel):
     email: EmailStr
     full_name: Optional[str] = None
-    role: str = "student"  
+    role: str = "student"
 
 class UserCreate(UserBase):
     password: str
 
 class User(UserBase):
     id: Optional[PyObjectId] = Field(alias="_id")
+    teacher: Optional[PyObjectId] = None
+    parent: Optional[PyObjectId] = None
 
     class Config:
         allow_population_by_field_name = True
