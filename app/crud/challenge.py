@@ -44,3 +44,5 @@ async def update_challenge(challenge_id: str, data: Challenge) -> Optional[dict]
 async def delete_challenge(challenge_id: str) -> Optional[dict]:
     deleted = await collection.find_one_and_delete({"_id": ObjectId(challenge_id)})
     return await challenge_helper(deleted) if deleted else None
+
+
