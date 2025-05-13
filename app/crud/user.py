@@ -68,10 +68,10 @@ async def get_teacher_children(teacher_id: str) -> List[dict]:
     coros = [user_helper(d) for d in docs]
     children: List[dict] = await asyncio.gather(*coros)
     return children
+
 async def get_parent_children(parent_id: str) -> List[dict]:
     tid = ObjectId(parent_id)
     docs = await collection.find({"parent": tid}).to_list(length=None)
-
     coros = [user_helper(d) for d in docs]
-    # run them concurrently and await the results
+    children: List[dict] = await asyncio.gather(*coros)
     return children

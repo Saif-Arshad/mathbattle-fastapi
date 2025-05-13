@@ -5,7 +5,6 @@ import random
 import time
 from typing import Dict, List, Optional
 
-# Initialize FastAPI app
 app = FastAPI()
 
 # Configure CORS
@@ -16,8 +15,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# Setup for socketio
 
-# Initialize Socket.IO
 sio = socketio.AsyncServer(
     async_mode='asgi',
     cors_allowed_origins=["http://127.0.0.1:5500", "http://localhost:5500"],  # Allow Live Server origins
@@ -28,11 +27,10 @@ sio = socketio.AsyncServer(
 )
 socket_app = socketio.ASGIApp(sio, app)
 
-# Game state
 waiting_players: List[str] = []
 active_games: Dict[str, Dict] = {}
 player_rooms: Dict[str, str] = {}
-
+#  Function for generating math question
 def generate_math_question():
     """Generate a random math question."""
     operations = ['+', '-', '*']
@@ -43,7 +41,7 @@ def generate_math_question():
         answer = a + b
     elif operation == '-':
         a = random.randint(1, 100)
-        b = random.randint(1, a)  # Ensure positive result
+        b = random.randint(1, a)  #
         answer = a - b
     else:  # multiplication
         a = random.randint(1, 12)
@@ -86,7 +84,6 @@ async def join_queue(sid, data):
         player2_sid = waiting_players.pop(0)
         room = f"game_{int(time.time())}"
         
-        # Create game session
         active_games[room] = {
             'players': [player1_sid, player2_sid],
             'scores': {player1_sid: 0, player2_sid: 0},
@@ -94,15 +91,12 @@ async def join_queue(sid, data):
             'current_question': generate_math_question()
         }
         
-        # Associate players with room
         player_rooms[player1_sid] = room
         player_rooms[player2_sid] = room
         
-        # Join room
         await sio.enter_room(player1_sid, room)
         await sio.enter_room(player2_sid, room)
         
-        # Start game
         await sio.emit('game_start', {
             'room': room,
             'question': active_games[room]['current_question']['question']
@@ -117,14 +111,11 @@ async def submit_answer(sid, data):
     game = active_games[room]
     current_question = game['current_question']
     
-    # Validate answer
     if int(data['answer']) == current_question['answer']:
         game['scores'][sid] += 1
         
-        # Generate new question
         game['current_question'] = generate_math_question()
         
-        # Send updated scores and new question
         await sio.emit('score_update', {
             'scores': game['scores'],
             'question': game['current_question']['question']
@@ -141,7 +132,6 @@ async def game_over(sid):
     game = active_games[room]
     scores = game['scores']
     
-    # Determine winner
     max_score = max(scores.values())
     winners = [p for p, s in scores.items() if s == max_score]
     
@@ -152,11 +142,9 @@ async def game_over(sid):
     
     await sio.emit('game_results', result, room=room)
     
-    # Cleanup
     for player_sid in game['players']:
         if player_sid in player_rooms:
             del player_rooms[player_sid]
     del active_games[room]
 
-# Mount Socket.IO app
 app.mount("/", socket_app) 
