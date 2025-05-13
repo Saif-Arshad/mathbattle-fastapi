@@ -1,48 +1,30 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 import socketio
 import random
 import time
 from typing import Dict, List, Optional
-from app.routers import auth, subject, challenge, progress, admin, parent, teacher
-
-app = FastAPI(title="Math Battle API")
-
-origins = [
-    "http://localhost",
-    "http://localhost:3000",
-    "http://127.0.0.1:5500",
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-app.include_router(auth.router)
-app.include_router(subject.router)
-app.include_router(challenge.router)
-app.include_router(progress.router)
-app.include_router(admin.router)
-app.include_router(parent.router)
-app.include_router(teacher.router)
 
 sio = socketio.AsyncServer(
     async_mode='asgi',
-    cors_allowed_origins=origins,
+    cors_allowed_origins=[
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
+        "http://localhost:3000",
+        "http://localhost:8000",
+    ],
     ping_timeout=60,
     ping_interval=25,
     logger=True,
     engineio_logger=True
 )
+
+from fastapi import FastAPI
+app = FastAPI()
 socket_app = socketio.ASGIApp(sio, app)
 
 waiting_players: List[str] = []
 active_games: Dict[str, Dict] = {}
 player_rooms: Dict[str, str] = {}
+
 def generate_math_question():
     """Generate a random math question."""
     operations = ['+', '-', '*']
@@ -53,7 +35,7 @@ def generate_math_question():
         answer = a + b
     elif operation == '-':
         a = random.randint(1, 100)
-        b = random.randint(1, a)  #
+        b = random.randint(1, a)
         answer = a - b
         a = random.randint(1, 12)
         b = random.randint(1, 12)
@@ -155,6 +137,4 @@ async def game_over(sid):
     for player_sid in game['players']:
         if player_sid in player_rooms:
             del player_rooms[player_sid]
-    del active_games[room]
-
-app.mount("/", socket_app) 
+    del active_games[room] 
