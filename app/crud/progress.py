@@ -3,6 +3,7 @@ from bson import ObjectId
 from datetime import datetime
 from ..database import db
 from ..schemas.progress import Progress
+from ..schemas.user import User
 
 collection = db.progress
 
@@ -27,3 +28,28 @@ async def record_progress(p: Progress) -> dict:
 async def get_student_progress(student_id: str) -> List[dict]:
     cursor = collection.find({"student_id": ObjectId(student_id)})
     return [progress_helper(d) async for d in cursor]
+
+async def get_leaderboard_by_subject(subject_id: str, limit: int = 20):
+    pipeline = [
+        {"$match": {"subject_id": ObjectId(subject_id)}},
+        {"$group": {
+            "_id": "$student_id",
+            "score": {"$sum": "$points"}
+        }},
+        {"$sort": {"score": -1}},
+        {"$limit": limit},
+        {"$lookup": {
+            "from": "users",
+            "localField": "_id",
+            "foreignField": "_id",
+            "as": "user"
+        }},
+        {"$unwind": {"path": "$user", "preserveNullAndEmptyArrays": True}},
+        {"$project": {
+            "_id": 0,
+            "username": "$user.full_name",
+            "score": 1
+        }}
+    ]
+    results = await db.progress.aggregate(pipeline).to_list(length=limit)
+    return results

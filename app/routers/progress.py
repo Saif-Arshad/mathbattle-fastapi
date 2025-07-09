@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from typing import List
-from ..crud.progress import record_progress, get_student_progress
+from ..crud.progress import record_progress, get_student_progress, get_leaderboard_by_subject
 from ..schemas.progress import Progress
 
 router = APIRouter(prefix="/progress", tags=["progress"])
@@ -17,3 +17,8 @@ async def progress(student_id: str):
     if entries is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No progress found for this student")
     return entries
+
+@router.get("/leaderboard/{subject_id}", tags=["leaderboard"])
+async def leaderboard_by_subject(subject_id: str):
+    result = await get_leaderboard_by_subject(subject_id)
+    return result
