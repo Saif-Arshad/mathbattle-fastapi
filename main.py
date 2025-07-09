@@ -53,12 +53,13 @@ def generate_math_question():
         answer = a + b
     elif operation == '-':
         a = random.randint(1, 100)
-        b = random.randint(1, a)  #
+        b = random.randint(1, a)
         answer = a - b
+    else:  # operation == '*'
         a = random.randint(1, 12)
         b = random.randint(1, 12)
         answer = a * b
-    
+
     return {
         'question': f"{a} {operation} {b}",
         'answer': answer
